@@ -2,7 +2,7 @@
 layout: page
 title: Developer Guide
 ---
-Table of Contents
+## Table of Contents
 1. [Preface](#1-preface)<br>
 1. [Setting up, getting started](#2-setting-up-getting-started)<br>
 1. [Design](#3-design)<br>
@@ -13,9 +13,15 @@ Table of Contents
    3.5  [Storage Component](#35-storage-component)<br>
    3.6  [Common Classes](#36-common-classes)<br>
 1. [Implementation](#4-implementation)<br>
-   4.1 [Sochedule](#41-sochedule)<br>
+   4.1 [SOChedule](#41-sochedule)<br>
+       4.1.1 [Overview](#411-overview)<br>
+       4.1.2 [Implementation of SOChedule-level Commands](#412-implementation)<br>
    4.2 [Task](#42-task)<br>
+       4.1.1 [Overview](#421-overview)<br>
+       4.1.2 [Implementation of Task-level Commands](#422-implementation)<br>
    4.3 [Event](#43-event)<br>
+       4.1.1 [Overview](#431-overview)<br>
+       4.1.2 [Implementation of Event-level Commands](#432-implementation)<br>
 1. [Planned Features](#5-documentation-logging-testing-configuration-dev-ops)<br>
 1. [Appendix](#appendix)<br>
    A1. [Product Scope](#a1-product-scope)<br>
@@ -81,7 +87,7 @@ For example, the `Logic` component (see the class diagram given below) defines i
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete_task 1`.
 
 ![Architecture Sequence Diagram](images/ArchitectureSequenceDiagram.png)
 
@@ -122,6 +128,8 @@ Given below is the Sequence Diagram for interactions within the `Logic` componen
 
 <div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `DeleteTaskCommandParser`should end at the destroy marker (X) but due to a limitation of PlantUML, the lifeline reaches the end of diagram.
 </div>
+
+[Return to Table of Contents](#table-of-contents)  
 
 ### 3.4 Model component
 
@@ -189,6 +197,8 @@ The `Storage` component,
 
 Classes used by multiple components are in the `seedu.addressbook.commons` package.
 
+[Return to Table of Contents](#table-of-contents)  
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## 4 Implementation
@@ -219,6 +229,8 @@ The sequence diagram for `ClearCommand` can be found below.
 
 ![Sequence Diagram of Clear Command](images/ClearCommandSequenceDiagram.png)
 
+[Return to Table of Contents](#table-of-contents)  
+
 **Implementation of SummaryCommand**  
 The following is a detailed explanation on how SummaryCommand is implemented.
 
@@ -240,6 +252,8 @@ A success message will be appended with `CommandResult#MESSAGE_SUCCESS`.
 The sequence diagram for `SummaryCommand` can be found below.
 
 ![Sequence Diagram of Summary Command](images/SummaryCommandSequenceDiagram.png)
+
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of FindScheduleCommand**  
 The following is a detailed explanation on how SummaryCommand is implemented.
@@ -271,6 +285,8 @@ when calling the method `Model#updateFilteredTaskList(TaskFindSchedulePredicate 
 Same for the method `Model#updateFilteredEventList(EventFindSchedulePredicate eventPredicate)`.
 </div>
 
+[Return to Table of Contents](#table-of-contents)  
+
 ### 4.2 Task
 
 #### 4.2.1 Overview
@@ -297,6 +313,8 @@ The sequence diagram for `AddTaskCommand` can be found below.
 
 ![Sequence Diagram of AddTask Command](images/AddTaskCommandSequenceDiagram.png)
 
+[Return to Table of Contents](#table-of-contents)  
+
 **Implementation of DeleteTaskCommand**  
 The following is a detailed explanation on how DeleteTaskCommand is implemented.
 
@@ -317,6 +335,7 @@ The sequence diagram for `DeleteTaskCommand` can be found below.
 
 ![Sequence Diagram of DeleteTask Command](images/DeleteTaskCommandSequenceDiagram.png)
 
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of UndoneTaskCommand**  
 The following is a detailed explanation on how UndoneTaskCommand is implemented.
@@ -372,6 +391,7 @@ The sequence diagram for `EditTaskCommand` can be found below.
 
 ![Sequence Diagram of EditTask Command](images/EditTaskCommandSequenceDiagram.png)
 
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of SortTaskCommand**  
 The following is a detailed explanation on how SortTaskCommand is implemented in the Logic component.
@@ -396,6 +416,59 @@ The sequence diagram for `sortTaskCommand` can be found below.
 ***Lower Level implementation***  
 The following is a brief explanation , as shown in a sequence diagram, of how sorting is implemented inside the Model component.
 ![Sequence Diagram of SortTaskCommand in Model Component](images/SortTaskModelSequenceDiagram.png)
+
+***Design Considerations for `SortTaskCommand`***
+<table>
+    <tr>
+        <th> Alternative 1 (Chosen Implementation) </th>
+        <th> Alternative 2 </th>
+    </tr>
+    <tr>
+        <td> 
+            <ul>
+                <li>Persistent Sorting using a Comparator</li>
+                <li> Pros:
+                    <ul>
+                        <li>UX considerations when users expect sorting to be persistent over multiple commands</li>
+                    </ul>
+                </li>
+                <li> Cons:
+                    <ul>
+                        <li>Additional Testing of Comparator needed</li>
+                        <li>Additional component added might add to complexity</li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+        <td> 
+            <ul>
+                <li>Transient Sorting by sorting the UniqueTaskList directly</li>
+                <li> Pros:
+                    <ul>
+                        <li>Straightforward implementation</li>
+                        <li>Less testing required due to less components</li>
+                    </ul>
+                </li>
+                <li> Cons:
+                    <ul>
+                        <li>UX might be compromised as order is not maintained over command executions</li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+    </tr>
+</table>
+
+Our group decided to go with alternative 1 and implemented an additional sort comparator known as `TaskComparator`.
+This is to ensure smoother UX, as well as better integration with other commands.
+
+By implementing it in this way, our group is able to ensure that the sort order remains consistent over commands that could either:
+* Alter the number of tasks shown at any one time (See <code>find_task</code>)</li>
+* Change the order of task appearance independent of <code>sort_task</code> (See <code>pin_task</code>)</li>
+
+This would enable SOChedule to better serve the needs of its user base. 
+
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of PinTaskCommand/UnpinTaskCommand**  
 The following is a detailed explanation on how PinTaskCommand is implemented.
@@ -423,6 +496,13 @@ It is largely similar to `SortTaskCommand`, with a some minor differences:
 
 ![Sequence Diagram of PinTaskCommand](images/PinTaskSequenceDiagram.png)
 
+The below activity diagram summarises what happens when `pin_task` is called.
+It can also be similarly extrapolated to apply to `unpin_task`.
+
+![Activity Diagram of PinTaskCommand](images/PinTaskActivityDiagram.png)
+
+[Return to Table of Contents](#table-of-contents)  
+
 **Implementation of ClearCompletedTaskCommand**  
 The following is a detailed explanation on how ClearCompletedTaskCommand is implemented.
 
@@ -440,6 +520,7 @@ The sequence diagram for `ClearCompletedTaskCommand` can be found below.
 
 ![Sequence Diagram of Clear Command](images/ClearCompletedTaskCommandSequenceDiagram.png)
 
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of ClearExpiredTaskCommand**  
 The following is a detailed explanation on how ClearExpiredTaskCommand is implemented.
@@ -458,7 +539,7 @@ The sequence diagram for `ClearExpiredTaskCommand` can be found below.
 
 ![Sequence Diagram of Clear Command](images/ClearExpiredTaskCommandSequenceDiagram.png)
 
-
+[Return to Table of Contents](#table-of-contents)  
 
 ### 4.3 Event
 
@@ -486,6 +567,7 @@ The sequence diagram for `AddEventCommand` can be found below.
 
 ![Sequence Diagram of AddEvent Command](images/AddEventCommandSequenceDiagram.png)
 
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of DeleteEventCommand**  
 The following is a detailed explanation on how DeleteEventCommand is implemented.
@@ -507,6 +589,7 @@ The sequence diagram for `DeleteEventCommand` can be found below.
 
 ![Sequence Diagram of DeleteEvent Command](images/DeleteEventCommandSequenceDiagram.png)
 
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of EditEventCommand**  
 The following is a detailed explanation on how EditEventCommand is implemented.
@@ -531,9 +614,7 @@ The sequence diagram for `EditEventCommand` can be found below.
 
 ![Sequence Diagram of EditEvent Command](images/EditEventCommandSequenceDiagram.png)
 
-The following activity diagram summarises what happens when a user executes a SaveCommand:
-
-<img src="images/EditEventCommandActivityDiagram.png" width="450" />
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of FindFreeTimeCommand**  
 The following is a detailed explanation on how FindFreeTaskCommand is implemented.
@@ -554,7 +635,59 @@ The sequence diagram for `FindFreeTimeCommand` can be found below.
 
 ![Sequence Diagram of FindFreeTimeCommand](images/FindFreeTimeCommandSequenceDiagram.png)
 
+The below activity diagram summarises what happens when `free_time` is called.
 
+![Activity Diagram of FindFreeTimeCommand](images/FindFreeTimeActivityDiagram.png)
+
+***Design Considerations for `FindFreeTimeCommand`***
+<table>
+    <tr>
+        <th> Alternative 1 (Chosen Implementation) </th>
+        <th> Alternative 2 </th>
+    </tr>
+    <tr>
+        <td> 
+            <ul>
+                <li>Several helper functions were implemented in UniqueEventList class</li>
+                <li> Pros:
+                    <ul>
+                        <li>Each function hanles a small part of logic</li>
+                        <li>Easier to detect bugs</li>
+                        <li>Better readability of code</li>
+                    </ul>
+                </li>
+                <li> Cons:
+                    <ul>
+                        <li>Longer lines of code</li>
+                        <li>Affects other classes</li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+        <td> 
+            <ul>
+                <li>Write methods in FindFreeTimeCommand class directly</li>
+                <li> Pros:
+                    <ul>
+                        <li>Straightforward implementation</li>
+                        <li>Less testing required due to less components</li>
+                    </ul>
+                </li>
+                <li> Cons:
+                    <ul>
+                        <li>Strong dependency on Event class and UniqueEventList class</li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+    </tr>
+</table>
+<div markdown="block">
+
+We choose alternative 1 because it presents code in a clearer way. Breaking up long methods into shorter methods will improve
+readability of the code. Implementing codes under UniqueEventList also reduces dependency.
+
+[Return to Table of Contents](#table-of-contents)  
 
 **Implementation of ClearExpiredEventCommand**  
 The following is a detailed explanation on how ClearExpiredEventCommand is implemented.
@@ -574,6 +707,7 @@ The sequence diagram for `ClearExpiredEventCommand` can be found below.
 ![Sequence Diagram of Clear Command](images/ClearExpiredEventCommandSequenceDiagram.png)
 
 
+[Return to Table of Contents](#table-of-contents)  
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -610,42 +744,48 @@ The sequence diagram for `ClearExpiredEventCommand` can be found below.
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
+#### Task Related
+
 | Priority | As a …​                            | I want to …​                                                        | So that …​                                                                |
 | -------- | ------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `* * *`  | SOC Student                           | Add a task to my schedule                                              | I can track my task better                                                   |
-| `* *`    | SOC Student                           | Allocate a priority score to a task                                    | I can prioritise my time better                                              |
-| `* *`    | SOC Student                           | Edit a task in my schedule                                             | I can have flexibility in my schedule                                        |
-| `* * *`  | SOC Student                           | Mark a task complete in my schedule                                    | I can track which tasks I have completed                                     |
 | `* * *`  | SOC Student                           | Delete a task from my schedule from my schedule                        | I can have flexibility in my schedule                                        |
+| `* * *`  | SOC Student                           | Edit tasks in my schedule                                              | I can have flexibility in my schedule                                        |
 | `* * *`  | SOC Student                           | View tasks in my schedule                                              | I can have a better sense of what will happen in the following days or weeks |
+| `* *`    | SOC Student                           | Mark a task complete in my schedule                                    | I can track which tasks I have completed                                     |
+| `* *`    | SOC Student                           | Undo a completed task in my schedule                                   | I undo the marking if it is done by mistake                                  |
 | `* *`    | SOC Student                           | Sort my tasks in my schedule in various orderings                      | I can prioritise my time better                                              |
-| `*`      | Forgetful SOC Student                 | Get reminders from SOChedule regarding task deadlines                  | I will not lose track of my tasks                                            |
-| `* *`    | SOC student under huge workload       | View my schedule to see my free time slots                             | I can allocate my time better and fill it up with more tasks                 |
-| `*`      | SOC Student                           | View the people that I need to work with for a specific event          | I can keep in touch with the person better                                   |
-| `* * *`  | SOC Student                           | Add an event (with the required information) to my schedule            | I can track my time better                                                   |
-| `* *`    | SOC Student                           | Add recurring events (with the required information) to my schedule    | I can plan ahead for my schedule                                             |
-| `*`      | SOC Student                           | Add a person that I have to work with to an event in my schedule       | I can track who I need to work with for an even                              |
-| `*`      | SOC Student                           | Add a meeting link to an event in my schedule                          | I can quickly join a online meeting                                          |
-| `* *`    | SOC Student                           | Edit event description in my schedule                                  | I can have flexibility in my schedule                                        |
-| `* *`    | SOC Student                           | Edit the event time in my schedule                                     | I can have flexibility in my schedule                                        |
+| `* *`    | SOC Student                           | Pin certain tasks in my schedule                                       | I can prioritise my time better                                              |
+| `* *`    | SOC Student                           | Unpin certain tasks in my schedule                                     | I can prioritise my time better                                              |
+| `*`      | SOC Student                           | View tasks with the deadline on current date                           | I can have a better sense of what tasks are due today                        |
+| `*`      | SOC Student                           | Search tasks by certain keywords                                       | I can view the details of the task that I want to find                       |
+| `*`      | SOC Student                           | Clear completed tasks                                                  | I can make my schedule cleaner                                               |
+| `*`      | SOC Student                           | Clear expired tasks                                                    | I can make my schedule cleaner                                               |
+| `*`      | SOC Student                           | Allocate a priority score to a task                                    | I can prioritise my time better                                              |
+| `*`      | SOC Student                           | Allocate a category to a task                                          | I can know what category my tasks belong to                                  |
+
+#### Event Related
+
+| Priority | As a …​                            | I want to …​                                                        | So that …​                                                                |
+| -------- | ------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `* * *`  | SOC Student                           | Add an event to my schedule                                            | I can track my events better                                                 |
 | `* * *`  | SOC Student                           | Delete an event from my schedule from my schedule                      | I can have flexibility in my schedule                                        |
-| `*`      | SOC Student                           | Remove the person I am working with for an event                       | I can track who I need to work with for an event                             |
+| `* * *`  | SOC Student                           | Edit events in my schedule                                             | I can have flexibility in my schedule                                        |
 | `* * *`  | SOC Student                           | View events in my schedule                                             | I can have a better sense of what will happen in the following days or weeks |
-| `* *`    | SOC Student                           | View events for today                                                  | I can have a better sense of what will happen in the following hours         |
-| `* *`    | SOC Student                           | Sort the tasks based on the deadline                                   | I can proceed with the task that is closer to the deadline                   |
-| `*`      | SOC Student                           | Get alerts for impending events                                        | I can prepare ahead of time for the event                                    |
-| `*`      | SOC Student                           | Add the schedule of what I want to do and what I really do             | I can reflect which part of the day being not productive                     |
-| `*`      | SOC Student                           | Set alert time frame for events                                        | I can prepare ahead of time                                                  |
-| `* *`    | SOC Student                           | Set colours to events                                                  | I can categorise my events                                                   |
-| `* *`    | SOC Student                           | Set colours to tasks                                                   | I can categorise my tasks                                                    |
-| `* *`    | SOC Student                           | highlight the events that are very important                           | I can differentiate the important tasks from the rest                        |
-| `*`      | SOC Student                           | record the progress of a habit user want to cultivate                  | I can cultivate a lot of good habits                                         |
-| `*`      | SOC Student                           | write a diary each day                                                 | I can record my life                                                         |
-| `*`      | SOC Student with many project modules | know who I am doing the task with                                      | it is easier to schedule meetings or discussions with my group mates         |
-| `*`      | SOC Student                           | keep track of the progress of each module                              | I can finish all tasks well and on time                                      |
-| `* *`    | SOC Student                           | categorise my tasks                                                    | I can group my tasks to have a clearer schedule                              |
-| `* *`    | SOC Student                           | find out the free time between events                                  | fill in other activities to achieve better time management                   |
-| `*`      | SOC Student taking several projects   | have a better sense on the project tasks assigned and the due date     | I can finish the tasks assigned on time                                      |
+| `*`      | SOC Student                           | View events that are happening today                                   | I can have a better sense of what events are happening today                 |
+| `*`      | SOC Student                           | Search events by certain keywords                                      | I can view the details of the event that I want to find                      |
+| `*`      | SOC Student                           | Clear expired events                                                   | I can make my schedule cleaner                                               |
+| `*`      | SOC Student                           | Allocate a priority score to an event                                  | I can prioritise my time better                                              |
+| `*`      | SOC Student                           | Allocate a category to an event                                        | I can know what category my events belong to                                 |
+
+#### Both Task and Event Related
+
+| Priority | As a …​                            | I want to …​                                                        | So that …​                                                                |
+| -------- | ------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `* *`    | SOC Student                           | Find tasks and events before or on a given date                        | I can keep track of my tasks and events better                               |
+| `* *`    | SOC Student                           | Find free time slots on a specific date                                | I can allocate my time better                                                |
+| `* *`    | SOC Student                           | Have a summary of task completion status and events in next 7 days     | I can keep track of my progress and plan ahead for my schedule               |
+| `*`      | SOC Student                           | Clear the entire schedule                                              | I can start adding tasks and events from fresh                               |
 
 *{More to be added}*
 
@@ -653,7 +793,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 (For all use cases below, the **System** is the `SOChedule` and the **Actor** is the `User`, unless specified otherwise)
 
-**Use case: UC01 - Add a task**
+**Use case: UC01 - Adding a task**
 
 **MSS**
 
@@ -678,17 +818,7 @@ Use case ends.
       is invalid, or not following the `YYYY-MM-DD` format.
       Use case ends.
 
-**Use case: UC02 - List tasks**
-
-**MSS**
-
-1. User wishes to add a new task.
-2. User enters the corresponding command.
-3. SOChedule displays all tasks.
-<br><br>
-Use case ends.
-
-**Use case: UC03 - Delete a task**
+**Use case: UC02 - Deleting a task**
 
 **MSS**
 
@@ -697,8 +827,8 @@ Use case ends.
 3. User chooses to delete a task.
 4. User enters the index of the task to be deleted.
 5. SOChedule displays a success message for deleting the task.
-<br><br>
-Use case ends.
+   <br><br>
+   Use case ends.
 
 **Extensions**
 
@@ -714,8 +844,23 @@ Use case ends.
 
       Use case resumes at step 2.
 
-**Use case: UC04 - Mark a task as completed**
+**Use case: UC03 - Editing a task**
 
+`<pending>`
+
+**Use case: UC04 - List tasks**
+
+**MSS**
+
+1. User wishes to add a new task.
+2. User enters the corresponding command.
+3. SOChedule displays all tasks.
+<br><br>
+Use case ends.
+
+
+**Use case: UC05 - Marking tasks complete**
+*TO BE EDITED*
 **MSS**
 
 1. User requests to <u> list tasks (UC02)</u>.
@@ -723,8 +868,8 @@ Use case ends.
 3. User chooses to mark a task as completed.
 4. User enters the index of the task to be marked.
 5. SOChedule displays a success message for marking the task as completed.
-<br><br>
-Use case ends.
+   <br><br>
+   Use case ends.
 
 **Extensions**
 
@@ -739,7 +884,110 @@ Use case ends.
 
       Use case resumes at step 2.
 
-**Use case: UC05 - Add an event**
+**Use case: UC06 - Undoing a task completion**
+
+`<pending>`
+
+**Use case: UC07 - Getting tasks today**
+
+`<pending>`
+
+**Use case: UC08 - Sorting all tasks**
+
+**MSS**
+
+1. User requests to <u> list tasks (UC02)</u>.
+2. SOChedule shows a list of tasks.
+3. User chooses to sort task.
+4. User enters the sort parameter.
+5. SOChedule sorts the task list, and displays a success message.
+   <br><br>
+   Use case ends.
+
+**Extensions**
+
+* 2a. The task list is empty.
+
+  Use case ends.
+
+
+* 4a. The given sort argument is invalid.
+
+    * 4a1. SOChedule shows an error message indicating the invalidity of the sort argument.
+
+      Use case resumes at step 2.
+
+**Use case: UC09 - Pinning a task**
+
+**MSS**
+
+1. User requests to <u> list tasks (UC02)</u>.
+2. SOChedule shows a list of tasks.
+3. User chooses to pin a task.
+4. User enters the index of the task to be pinned.
+5. SOChedule pins the task, <u> sorts the task list (UC08)</u>, and displays a success message for pinning the task.
+   <br><br>
+   Use case ends.
+
+**Extensions**
+
+* 2a. The task list is empty.
+
+  Use case ends.
+
+
+* 3a. The given index is invalid.
+
+    * 3a1. SOChedule shows an error message indicating the invalidity of the index.
+
+      Use case resumes at step 2.
+        
+* 3b. The task specified by index is already pinned
+
+    * 3b1. SOChedule shows an error message indicating that task is already pinned.
+
+      Use Case resumes at step 2.
+
+**Use case: UC10 - Unpinning a task**
+
+**MSS**
+
+1. User requests to <u> list tasks (UC02)</u>.
+2. SOChedule shows a list of tasks.
+3. User chooses to unpin a task.
+4. User enters the index of the task to be unpinned.
+5. SOChedule unpins the task, <u> sorts the task list (UC08)</u>, and displays a success message for unpinning the task.
+   <br><br>
+   Use case ends.
+
+**Extensions**
+
+* 2a. The task list is empty.
+
+  Use case ends.
+
+
+* 3a. The given index is invalid (negative or out of range).
+
+    * 3a1. SOChedule shows an error message indicating the invalidity of the index.
+
+      Use case resumes at step 2.
+    
+* 3b. The task specified by index is not pinned
+
+    * 3b1. SOChedule shows an error message indicating that task is not pinned.
+    
+      Use Case resumes at step 2.
+
+**Use case: UC11 - Clearing all completed tasks**
+
+`<pending>`
+
+**Use case: UC12 - Clearing all expired tasks**
+
+`<pending>`
+
+**Use case: UC13 - Add an event**
 
 **MSS**
 
@@ -763,22 +1011,7 @@ Use case ends.
       is invalid, or not following the `YYYY-MM-DD` format.
       Use case ends.
 
-**Use case: UC06 - List events**
-
-**MSS**
-
-1. User requests to list all events in the SOChedule.
-1. SOChedule displays a list of all events added.
-<br><br>
-Use case ends.
-
-**Extensions**
-
-* 1a. No events have been added.
-    * 1a1. SOChedule displays an empty list.
-      Use case ends.
-
-**Use case: UC07 - Delete an event**
+**Use case: UC14 - Delete an event**
 
 **MSS**
 
@@ -803,7 +1036,78 @@ Use case ends.
 
       Use case resumes at step 2.
 
-      
+**Use case: UC15 - Editing an event**
+
+`<pending>`
+
+**Use case: UC16 - List events**
+
+**MSS**
+
+1. User requests to list all events in the SOChedule.
+1. SOChedule displays a list of all events added.
+   <br><br>
+   Use case ends.
+
+**Extensions**
+
+* 1a. No events have been added.
+    * 1a1. SOChedule displays an empty list.
+      Use case ends.
+
+**Use case: UC17 - Getting today's events**
+
+`<pending>`
+
+**Use case: UC18 - Find an event**
+
+`<pending>`
+
+**Use case: UC19 - Clearing expired events**
+
+`<pending>`
+
+**Use case: UC20 - Finding tasks and events before or on given date**
+
+`<pending>`
+
+**Use case: UC21 - Finding free time slots**
+
+**MSS**
+
+1. User requests to find free time slots on a given date.
+2. SOChedule shows a list of free time slots on that date.
+   Use case ends.
+
+**Extensions**
+
+* 2a. SOChedule notifies that there is no free time slots.
+
+  Use case ends.
+
+
+* 3a. The given date is invalid.
+
+    * 3a1. SOChedule shows an error message indicating the invalidity of the date.
+
+      Use case ends.
+
+**Use case: UC22 - Getting a summary of SOChedule**
+
+**MSS**
+
+1. User requests to have a summary.
+2. SOChedule shows a list of different types of tasks and events happening in the next 7 days.
+   Use case ends.
+
+**Use case: UC23 - Clearing SOChedule**
+
+**MSS**
+
+1. User requests to clear the whole SOChedule.
+2. SOChedule clears all tasks and events stored.
+3. SOChedule shows an empty list of tasks and events.
+
 *{More to be added}*
 
 ### A4. Non-Functional Requirements
